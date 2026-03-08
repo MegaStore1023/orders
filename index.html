@@ -690,6 +690,19 @@ footer {
   80% { transform: translateX(5px); }
 }
 
+/* Toasts & Banner */
+.toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; pointer-events: none; }
+.toast { background: var(--bg-card); border-left: 4px solid var(--danger); border-radius: 8px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 12px; animation: toastSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; pointer-events: auto; }
+.toast.success { border-left-color: var(--success); }
+.toast-icon { font-size: 20px; color: var(--danger); }
+.toast.success .toast-icon { color: var(--success); }
+.toast-msg { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; line-height: 1.5; }
+@keyframes toastSlide { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastFadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
+
+.cooldown-banner { position: fixed; top: 0; left: 0; right: 0; background: rgba(239, 68, 68, 0.95); color: white; text-align: center; padding: 12px 20px; font-size: 14px; font-weight: 700; z-index: 9998; backdrop-filter: blur(10px); display: none; transform: translateY(-100%); transition: transform 0.3s ease; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+.cooldown-banner.show { transform: translateY(0); display: block; }
+
 /* Success State */
 .order-success {
   text-align: center;
@@ -740,6 +753,11 @@ footer {
 </script>
 </head>
 <body>
+
+<div id="cooldownBanner" class="cooldown-banner">
+  <i class="fas fa-clock"></i> عذراً، يجب الانتظار لانتهاء العداد لتتمكن من إرسال طلب جديد.
+</div>
+<div id="toastContainer" class="toast-container"></div>
 
 <!-- NAVBAR -->
 <nav class="navbar">
@@ -1467,22 +1485,56 @@ function triggerPickerSelect(sid) {
 
 // ─── Submit Order ───
 document.getElementById('submitBtn').addEventListener('click', async () => {
+  // 1. حماية برمجية: منع الإرسال إذا كان العداد يعمل
+  if (checkCooldown()) {
+    showToast("عذراً، يجب الانتظار لانتهاء العداد لتتمكن من إرسال طلب جديد.");
+    return;
+  }
+
   const nameEl   = document.getElementById('name');
   const phoneEl  = document.getElementById('phone');
   const notesEl  = document.getElementById('notes');
   const name     = nameEl.value.trim();
-  const phone    = phoneEl.value.trim();
+  let phone      = phoneEl.value.trim();
   const notes    = notesEl.value.trim();
 
-  // Validation
-  if (!name)  { shake(nameEl); return; }
-  if (!phone) { shake(phoneEl); return; }
+  // 2. التحقق من الحقول وإظهار الإشعارات
+  if (!name) { 
+    shake(nameEl); 
+    showToast("يرجى إدخال اسمك أولاً في الخانة المخصصة."); 
+    return; 
+  }
+  // تحقق أن الاسم يحتوي على حروف فقط (عربي أو إنجليزي) بدون أرقام
+  const nameRegex = /^[\p{L}\s]+$/u;
+  if (!nameRegex.test(name)) {
+    shake(nameEl);
+    showToast("حقل الاسم يجب أن يحتوي على حروف فقط بدون أرقام أو رموز.");
+    return;
+  }
+
+  if (!phone) { 
+    shake(phoneEl); 
+    showToast("يرجى إدخال رقم الواتساب الخاص بك."); 
+    return; 
+  }
+  // تحقق أن الرقم يبدأ بـ 97 ويتكون من 12 رقم (سواء كان في قبله + أو لا)
+  const phoneRegex = /^(?:\+)?(97\d{10})$/;
+  const phoneMatch = phone.match(phoneRegex);
+  if (!phoneMatch) {
+    shake(phoneEl);
+    showToast("يرجى إدخال الرقم بصيغة صحيحة (يجب أن يبدأ بـ 97 ويتكون من 12 رقم).");
+    return;
+  }
+  // إضافة الـ + برمجياً وحفظ الرقم النهائي
+  phone = '+' + phoneMatch[1];
+
   if (!selectedServiceId) {
     const area = document.getElementById('selectedServiceArea');
     area.style.border = '1.5px solid rgba(239,68,68,0.5)';
     area.style.transition = 'border 0.3s';
     area.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => { area.style.border = '1.5px solid var(--border)'; }, 2500);
+    showToast("يرجى اختيار الخدمة المطلوبة من القائمة لتتمكن من الطلب.");
     return;
   }
 
@@ -1494,6 +1546,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
       bp.style.outline = '1.5px solid rgba(239,68,68,0.5)';
       setTimeout(() => bp.style.outline = '', 2500);
     }
+    showToast("يرجى اختيار الباقة المناسبة للخدمة التي قمت باختيارها.");
     return;
   }
 
@@ -1574,6 +1627,10 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     // تتبع إرسال الطلب
     trackVisitor('order_submitted', { serviceName: finalName, serviceCode: finalCode, amount: String(finalPrice) });
     
+    // بدء العداد لمنع الإرسال المتكرر للحماية (المدة الافتراضية 5 دقائق)
+    localStorage.setItem('lastOrderTime', new Date().getTime().toString());
+    startCooldownTimer(COOLDOWN_MINUTES * 60 * 1000);
+
     // فتح واتساب تلقائياً فقط إذا فشل الإيميل
     if (!emailSent) {
       window.open(waURL, '_blank');
@@ -1586,6 +1643,74 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     alert('حدث خطأ أثناء الإرسال، يرجى المحاولة مرة أخرى.');
   }
 });
+
+// ─── Toasts System ───
+function showToast(message, type = 'error') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
+  toast.innerHTML = `<i class="fas ${icon} toast-icon"></i><div class="toast-msg">${message}</div>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'toastFadeOut 0.3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// ─── Cooldown System ───
+const COOLDOWN_MINUTES = 5; // عدد الدقائق الممنوع فيها الطلب
+let cooldownInterval = null;
+
+function checkCooldown() {
+  const lastOrderTime = localStorage.getItem('lastOrderTime');
+  if (!lastOrderTime) return false;
+  
+  const now = new Date().getTime();
+  const diff = now - parseInt(lastOrderTime);
+  const cooldownMs = COOLDOWN_MINUTES * 60 * 1000;
+  
+  if (diff < cooldownMs) {
+    startCooldownTimer(cooldownMs - diff);
+    return true; // ممنوع الإرسال
+  } else {
+    localStorage.removeItem('lastOrderTime');
+    return false; // مسموح الإرسال
+  }
+}
+
+function startCooldownTimer(remainingMs) {
+  const btn = document.getElementById('submitBtn');
+  const banner = document.getElementById('cooldownBanner');
+  
+  btn.disabled = true;
+  banner.classList.add('show');
+  
+  if (cooldownInterval) clearInterval(cooldownInterval);
+  
+  const updateBtn = () => {
+    const now = new Date().getTime();
+    const lastOrderTime = parseInt(localStorage.getItem('lastOrderTime'));
+    const diff = now - lastOrderTime;
+    const cooldownMs = COOLDOWN_MINUTES * 60 * 1000;
+    let leftMs = cooldownMs - diff;
+    
+    if (leftMs <= 0) {
+      clearInterval(cooldownInterval);
+      localStorage.removeItem('lastOrderTime');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
+      banner.classList.remove('show');
+    } else {
+      const m = Math.floor(leftMs / 60000);
+      const s = Math.floor((leftMs % 60000) / 1000);
+      btn.innerHTML = `<i class="fas fa-lock"></i> إرسال الطلب (${m}:${s < 10 ? '0'+s : s})`;
+    }
+  };
+  
+  updateBtn();
+  cooldownInterval = setInterval(updateBtn, 1000);
+}
 
 // ─── Shake animation ───
 function shake(el) {
@@ -1692,9 +1817,15 @@ async function trackVisitor(eventType, extraData = {}) {
 }
 
 // ─── Init ───
-history.scrollRestoration = 'manual';
-window.scrollTo(0, 0);
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+// إجبار المتصفح على البقاء بالأعلى عند التحديث أو الدخول
+window.addEventListener('load', () => {
+  setTimeout(() => { window.scrollTo(0, 0); }, 50);
+});
 loadServices();
+checkCooldown(); // تشغيل فحص العداد فوراً عند تحميل الصفحة
 trackVisitor('page_visit');
 </script>
 
