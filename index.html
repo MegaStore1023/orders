@@ -1194,7 +1194,7 @@ const iconStyles = [
   { bg: 'rgba(239,68,68,0.12)',  color: '#f87171' },
   { bg: 'rgba(59,130,246,0.12)', color: '#60a5fa' },
 ];
-function loadCategories() {
+window.loadCategories = function() {
   onSnapshot(collection(db, 'categories'), (snap) => {
     categoriesData = [];
     snap.forEach(d => categoriesData.push({ id: d.id, ...d.data() }));
@@ -1204,7 +1204,7 @@ function loadCategories() {
   });
 }
 
-function renderCatsBar() {
+window.renderCatsBar = function() {
   const bar = document.getElementById('catsBar');
   if (!bar) return;
   bar.innerHTML = `<button class="cat-btn ${activeCategoryId==='all'?'active':''}" onclick="selectCategory('all')"><i class="fas fa-border-all" style="margin-left:4px;"></i> الكل</button>`;
@@ -1213,13 +1213,13 @@ function renderCatsBar() {
   });
 }
 
-function selectCategory(catId) {
+window.selectCategory = function(catId) {
   activeCategoryId = catId;
   renderCatsBar();
   renderServiceCards(document.getElementById('servicesGrid'));
 }
 
-function getFilteredServices() {
+window.getFilteredServices = function() {
   if (activeCategoryId === 'all') {
     // ترتيب: القسم الأقصى يميناً أولاً، ثم خدماته بترتيبها، ثم الخدمات بدون قسم
     let result = [];
@@ -1234,7 +1234,7 @@ function getFilteredServices() {
   return servicesData.filter(s => s.categoryId === activeCategoryId).sort((a,b)=>(a.sortOrder||0)-(b.sortOrder||0));
 }
 
-function handleServiceSearch() {
+window.handleServiceSearch = function() {
   const q = document.getElementById('svcSearchInput').value.trim();
   const dd = document.getElementById('searchDropdown');
   if (!q) { dd.style.display = 'none'; return; }
@@ -1269,13 +1269,13 @@ function handleServiceSearch() {
   dd.style.display = 'block';
 }
 
-function handleSearchFocus() {
+window.handleSearchFocus = function() {
   const wrap = document.getElementById('searchWrap');
   if (!wrap) return;
   wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function pickSearchResult(serviceId) {
+window.pickSearchResult = function(serviceId) {
   document.getElementById('svcSearchInput').value = '';
   document.getElementById('searchDropdown').style.display = 'none';
   document.getElementById('order').scrollIntoView({ behavior: 'smooth', block: 'center' });
