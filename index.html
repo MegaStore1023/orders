@@ -731,7 +731,93 @@ footer {
   margin: 16px auto 0;
   border-radius: 10px;
 }
+/* ─── CATEGORIES BAR ─── */
+.cats-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 24px;
+  scrollbar-width: none;
+}
+.cats-bar::-webkit-scrollbar { display: none; }
+.cat-btn {
+  flex-shrink: 0;
+  padding: 8px 18px;
+  border-radius: 100px;
+  border: 1.5px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.cat-btn:hover { border-color: rgba(99,102,241,0.4); color: var(--text); }
+.cat-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+}
 
+/* ─── SEARCH ─── */
+.search-wrap {
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto 20px;
+}
+.search-input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 44px 12px 16px;
+  color: var(--text);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s;
+}
+.search-input:focus { border-color: var(--primary); background: rgba(99,102,241,0.06); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+.search-input::placeholder { color: rgba(148,163,184,0.5); }
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0; left: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  z-index: 200;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  display: none;
+}
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: rgba(99,102,241,0.08); }
 /* ─── MOBILE ─── */
 @media (max-width: 768px) {
   /* Navbar */
@@ -898,6 +984,17 @@ footer {
     <div class="divider"></div>
     <p class="section-sub" style="margin-top:14px;">مجموعة متنوعة من الخدمات المصممة لتلبية كل احتياجاتك</p>
   </div>
+
+  <!-- بحث -->
+  <div class="search-wrap" id="searchWrap">
+    <input class="search-input" id="svcSearchInput" placeholder="ابحث عن خدمة..." oninput="handleServiceSearch()" onfocus="handleSearchFocus()">
+    <i class="fas fa-search search-icon"></i>
+    <div class="search-dropdown" id="searchDropdown"></div>
+  </div>
+
+  <!-- أقسام -->
+  <div class="cats-bar" id="catsBar" style="max-width:1100px; margin:0 auto 24px;"></div>
+
   <div class="services-grid" id="servicesGrid">
     <div class="services-loading">
       <i class="fas fa-circle-notch fa-spin"></i>
@@ -1081,6 +1178,8 @@ const db = getFirestore(app);
 
 // ─── State ───
 let servicesData = [];
+let categoriesData = [];
+let activeCategoryId = 'all';
 let selectedServiceId = null;
 let selectedServiceName = null;
 let selectedBranchCode = null;
@@ -1095,7 +1194,101 @@ const iconStyles = [
   { bg: 'rgba(239,68,68,0.12)',  color: '#f87171' },
   { bg: 'rgba(59,130,246,0.12)', color: '#60a5fa' },
 ];
+function loadCategories() {
+  onSnapshot(collection(db, 'categories'), (snap) => {
+    categoriesData = [];
+    snap.forEach(d => categoriesData.push({ id: d.id, ...d.data() }));
+    categoriesData.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    renderCatsBar();
+    renderServiceCards(document.getElementById('servicesGrid'));
+  });
+}
 
+function renderCatsBar() {
+  const bar = document.getElementById('catsBar');
+  if (!bar) return;
+  bar.innerHTML = `<button class="cat-btn ${activeCategoryId==='all'?'active':''}" onclick="selectCategory('all')"><i class="fas fa-border-all" style="margin-left:4px;"></i> الكل</button>`;
+  categoriesData.forEach(cat => {
+    bar.innerHTML += `<button class="cat-btn ${activeCategoryId===cat.id?'active':''}" onclick="selectCategory('${cat.id}')">${cat.name}</button>`;
+  });
+}
+
+function selectCategory(catId) {
+  activeCategoryId = catId;
+  renderCatsBar();
+  renderServiceCards(document.getElementById('servicesGrid'));
+}
+
+function getFilteredServices() {
+  if (activeCategoryId === 'all') {
+    // ترتيب: القسم الأقصى يميناً أولاً، ثم خدماته بترتيبها، ثم الخدمات بدون قسم
+    let result = [];
+    categoriesData.forEach(cat => {
+      let svcInCat = servicesData.filter(s => s.categoryId === cat.id).sort((a,b)=>(a.sortOrder||0)-(b.sortOrder||0));
+      result.push(...svcInCat);
+    });
+    let noCat = servicesData.filter(s => !s.categoryId || !categoriesData.find(c=>c.id===s.categoryId)).sort((a,b)=>(a.sortOrder||0)-(b.sortOrder||0));
+    result.push(...noCat);
+    return result;
+  }
+  return servicesData.filter(s => s.categoryId === activeCategoryId).sort((a,b)=>(a.sortOrder||0)-(b.sortOrder||0));
+}
+
+function handleServiceSearch() {
+  const q = document.getElementById('svcSearchInput').value.trim();
+  const dd = document.getElementById('searchDropdown');
+  if (!q) { dd.style.display = 'none'; return; }
+  const lower = q.toLowerCase();
+  const results = servicesData.filter(s =>
+    (s.name||'').toLowerCase().includes(lower) ||
+    (s.description||'').toLowerCase().includes(lower)
+  ).slice(0, 8);
+  if (results.length === 0) {
+    dd.innerHTML = `<div style="padding:14px; text-align:center; color:var(--text-muted); font-size:13px;">لا توجد نتائج</div>`;
+  } else {
+    const iconStyles2 = [
+      'rgba(99,102,241,0.12)','rgba(168,85,247,0.12)','rgba(245,158,11,0.12)',
+      'rgba(16,185,129,0.12)','rgba(239,68,68,0.12)','rgba(59,130,246,0.12)'
+    ];
+    const iconColors2 = ['#a5b4fc','#c084fc','#fbbf24','#34d399','#f87171','#60a5fa'];
+    dd.innerHTML = results.map((s, i) => {
+      let idx2 = i % 6;
+      let iconCls = s.icon ? `fa-${s.icon}` : 'fa-cube';
+      let isImg = s.iconUrl && /^https?:\/\//.test(s.iconUrl);
+      let price = s.hasBranches && s.branches?.length ? Math.min(...s.branches.map(b=>Number(b.price)||0)) + '₪+' : (s.price||0) + '₪';
+      let iconHtml = isImg
+        ? `<img src="${s.iconUrl}" style="width:24px;height:24px;object-fit:contain;border-radius:5px;" onerror="this.style.display='none'">`
+        : `<div style="width:24px;height:24px;background:${iconStyles2[idx2]};color:${iconColors2[idx2]};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;"><i class="fas ${iconCls}"></i></div>`;
+      return `<div class="search-result-item" onclick="pickSearchResult('${s.id}')">
+        ${iconHtml}
+        <span style="flex:1;font-size:13px;font-weight:700;">${s.name}</span>
+        <span style="font-size:12px;font-weight:800;color:var(--accent);">${price}</span>
+      </div>`;
+    }).join('');
+  }
+  dd.style.display = 'block';
+}
+
+function handleSearchFocus() {
+  const wrap = document.getElementById('searchWrap');
+  if (!wrap) return;
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function pickSearchResult(serviceId) {
+  document.getElementById('svcSearchInput').value = '';
+  document.getElementById('searchDropdown').style.display = 'none';
+  document.getElementById('order').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => triggerPickerSelect(serviceId), 600);
+}
+
+// إخفاء dropdown لما يضغط خارجه
+document.addEventListener('click', e => {
+  if (!document.getElementById('searchWrap')?.contains(e.target)) {
+    const dd = document.getElementById('searchDropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
 // ─── Load Services from Firebase (Real-time) ───
 function loadServices() {
   const grid = document.getElementById('servicesGrid');
@@ -1171,7 +1364,8 @@ function renderServiceCards(container) {
     return;
   }
 
-  servicesData.forEach((service, idx) => {
+  const filteredSvcs = getFilteredServices();
+  filteredSvcs.forEach((service, idx) => {
     const style = iconStyles[idx % iconStyles.length];
     const iconCls = service.icon ? `fa-${service.icon}` : 'fa-cube';
     const isImgIcon = service.iconUrl && /^https?:\/\//.test(service.iconUrl);
@@ -1901,6 +2095,7 @@ window.addEventListener('load', () => {
   setTimeout(() => { window.scrollTo(0, 0); }, 50);
 });
 loadServices();
+loadCategories();
 checkCooldown(); // تشغيل فحص العداد فوراً عند تحميل الصفحة
 trackVisitor('page_visit');
 </script>
