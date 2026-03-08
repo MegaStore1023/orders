@@ -737,6 +737,8 @@ footer {
   gap: 8px;
   flex-wrap: nowrap;
   overflow-x: auto;
+  overflow-y: visible;
+  padding: 8px 4px;
   padding-bottom: 6px;
   margin-bottom: 24px;
   scrollbar-width: none;
@@ -761,7 +763,19 @@ footer {
   background: var(--primary);
   border-color: var(--primary);
   color: white;
-  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+  box-shadow: 0 0 18px 6px rgba(99,102,241,0.45), 0 0 40px 10px rgba(99,102,241,0.18);
+  position: relative;
+  z-index: 1;
+}
+.cat-btn.active::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: 0 0 30px 12px rgba(99,102,241,0.25);
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* ─── SEARCH ─── */
@@ -1272,7 +1286,12 @@ window.handleServiceSearch = function() {
 window.handleSearchFocus = function() {
   const wrap = document.getElementById('searchWrap');
   if (!wrap) return;
-  wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const navbar = document.querySelector('nav') || document.querySelector('.navbar') || document.querySelector('header');
+  const navH = navbar ? navbar.getBoundingClientRect().height : 70;
+  const rect = wrap.getBoundingClientRect();
+  const currentTop = window.scrollY || window.pageYOffset;
+  const targetY = currentTop + rect.top - navH - 12;
+  window.scrollTo({ top: targetY, behavior: 'smooth' });
 }
 
 window.pickSearchResult = function(serviceId) {
