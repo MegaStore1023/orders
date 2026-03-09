@@ -1248,8 +1248,10 @@ setTimeout(() => {
     const wrap = document.getElementById('catsBarWrap');
     if (!bar || !wrap) return;
     const updateFade = () => {
-      wrap.classList.toggle('fade-right', bar.scrollLeft > 8);
-      wrap.classList.toggle('fade-left', bar.scrollLeft < bar.scrollWidth - bar.clientWidth - 8);
+      const scrollLeft = Math.abs(bar.scrollLeft);
+      const maxScroll = bar.scrollWidth - bar.clientWidth;
+      wrap.classList.toggle('fade-left', scrollLeft > 8);
+      wrap.classList.toggle('fade-right', scrollLeft < maxScroll - 8);
     };
     bar.removeEventListener('scroll', bar._fadeHandler);
     bar._fadeHandler = updateFade;
