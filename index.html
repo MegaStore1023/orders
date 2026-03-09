@@ -732,6 +732,32 @@ footer {
   border-radius: 10px;
 }
 /* ─── CATEGORIES BAR ─── */
+.cats-bar-wrap {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto 24px;
+}
+.cats-bar-wrap::before,
+.cats-bar-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 40px;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.cats-bar-wrap::before {
+  right: 0;
+  background: linear-gradient(to left, var(--bg-card) 30%, transparent);
+}
+.cats-bar-wrap::after {
+  left: 0;
+  background: linear-gradient(to right, var(--bg-card) 30%, transparent);
+}
+.cats-bar-wrap.fade-right::before { opacity: 1; }
+.cats-bar-wrap.fade-left::after { opacity: 1; }
 .cats-bar {
   display: flex;
   gap: 8px;
@@ -996,7 +1022,9 @@ footer {
   </div>
 
   <!-- أقسام -->
-  <div class="cats-bar" id="catsBar" style="max-width:1100px; margin:0 auto 24px;"></div>
+  <div class="cats-bar-wrap" id="catsBarWrap">
+    <div class="cats-bar" id="catsBar"></div>
+  </div>
 
   <div class="services-grid" id="servicesGrid">
     <div class="services-loading">
@@ -1215,7 +1243,19 @@ window.renderCatsBar = function() {
     bar.innerHTML += `<button class="cat-btn ${activeCategoryId===cat.id?'active':''}" onclick="selectCategory('${cat.id}')">${cat.name}</button>`;
   });
 }
-
+setTimeout(() => {
+    const bar = document.getElementById('catsBar');
+    const wrap = document.getElementById('catsBarWrap');
+    if (!bar || !wrap) return;
+    const updateFade = () => {
+      wrap.classList.toggle('fade-right', bar.scrollLeft > 8);
+      wrap.classList.toggle('fade-left', bar.scrollLeft < bar.scrollWidth - bar.clientWidth - 8);
+    };
+    bar.removeEventListener('scroll', bar._fadeHandler);
+    bar._fadeHandler = updateFade;
+    bar.addEventListener('scroll', updateFade);
+    updateFade();
+  }, 50);
 window.selectCategory = function(catId) {
   activeCategoryId = catId;
   renderCatsBar();
