@@ -1243,21 +1243,21 @@ window.renderCatsBar = function() {
     bar.innerHTML += `<button class="cat-btn ${activeCategoryId===cat.id?'active':''}" onclick="selectCategory('${cat.id}')">${cat.name}</button>`;
   });
 }
-setTimeout(() => {
-    const bar = document.getElementById('catsBar');
-    const wrap = document.getElementById('catsBarWrap');
-    if (!bar || !wrap) return;
-    const updateFade = () => {
-      const scrollLeft = Math.abs(bar.scrollLeft);
-      const maxScroll = bar.scrollWidth - bar.clientWidth;
-      wrap.classList.toggle('fade-right', scrollLeft > 8);
-      wrap.classList.toggle('fade-left', scrollLeft < maxScroll - 8);
-    };
-    bar.removeEventListener('scroll', bar._fadeHandler);
-    bar._fadeHandler = updateFade;
-    bar.addEventListener('scroll', updateFade);
-    updateFade();
-  }, 50);
+const bar = document.getElementById('catsBar');
+  const wrap = document.getElementById('catsBarWrap');
+  if (!bar || !wrap) return;
+  const updateFade = () => {
+    const scrollLeft = Math.abs(bar.scrollLeft);
+    const maxScroll = bar.scrollWidth - bar.clientWidth;
+    wrap.classList.toggle('fade-right', scrollLeft > 8);
+    wrap.classList.toggle('fade-left', scrollLeft < maxScroll - 8);
+  };
+  bar.removeEventListener('scroll', bar._fadeHandler);
+  bar._fadeHandler = updateFade;
+  bar.addEventListener('scroll', updateFade);
+  // شغّل بعد ما يكمل الرسم
+  setTimeout(updateFade, 100);
+  setTimeout(updateFade, 400);
 window.selectCategory = function(catId) {
   activeCategoryId = catId;
   renderCatsBar();
