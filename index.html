@@ -1399,6 +1399,8 @@ function renderServiceCards(container) {
       }
     } else if (service.hasDiscount && service.originalPrice) {
       priceHTML = `<div class="service-price"><span style="display:block;text-decoration:line-through;color:var(--text-muted);font-size:17px;font-weight:600;color:#ef4444;">${service.originalPrice}₪</span>${service.price || 0}₪ <span>/ مرة</span></div>`;
+    } else if (service.priceOnRequest) {
+      priceHTML = `<div class="service-price" style="color:var(--text-muted); font-size:15px;">حسب الطلب</div>`;
     } else {
       priceHTML = `<div class="service-price">${service.price || 0}₪ <span>/ مرة</span></div>`;
     }
@@ -1474,6 +1476,8 @@ function renderServicePicker(container) {
       priceLabel = `<span class="picker-price" style="color:var(--text-muted); font-size:12px;">اختر الباقة</span>`;
     } else if (service.hasDiscount && service.originalPrice) {
       priceLabel = `<span class="picker-price"><span style="display:block;text-decoration:line-through;color:var(--text-muted);font-size:12px;font-weight:600;color:#ef4444;line-height:1.2;">${service.originalPrice}₪</span>${service.price || 0} ₪</span>`;
+    } else if (service.priceOnRequest) {
+      priceLabel = `<span class="picker-price" style="color:var(--text-muted);">حسب الطلب</span>`;
     } else {
       priceLabel = `<span class="picker-price">${service.price || 0} ₪</span>`;
     }
