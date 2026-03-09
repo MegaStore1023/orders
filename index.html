@@ -1882,6 +1882,9 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
   try {
     // Save order to Firestore
+    if (localStorage.getItem('_ownerMode') === '1') {
+      console.log('%c[Owner Mode] الطلب لم يُرسل للـ Firebase', 'color:#a5b4fc; font-weight:bold;');
+    } else {
     await addDoc(collection(db, 'orders'), {
       customerName: name,
       phone:        phone,
@@ -1892,6 +1895,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
       status:       'pending',
       timestamp:    serverTimestamp()
     });
+    }
 
     // تجهيز بيانات الطلب
     const templateParams = {
@@ -2045,6 +2049,7 @@ function shake(el) {
 
 // ─── Visitor Activity Tracking ───
 async function trackVisitor(eventType, extraData = {}) {
+  if (localStorage.getItem('_ownerMode') === '1') return;
   try {
     const ua = navigator.userAgent;
     const getDevice = () => { if (/Mobi|Android|iPhone|iPad|iPod/i.test(ua)) { return /iPad/i.test(ua) ? 'Tablet' : 'Mobile'; } return 'Desktop'; };
