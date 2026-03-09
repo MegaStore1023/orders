@@ -1400,7 +1400,7 @@ function renderServiceCards(container) {
     } else if (service.hasDiscount && service.originalPrice) {
       priceHTML = `<div class="service-price"><span style="display:block;text-decoration:line-through;color:var(--text-muted);font-size:17px;font-weight:600;color:#ef4444;">${service.originalPrice}₪</span>${service.price || 0}₪ <span>/ مرة</span></div>`;
     } else if (service.priceOnRequest) {
-      priceHTML = `<div class="service-price" style="color:var(--text-muted); font-size:15px;">حسب الطلب</div>`;
+      priceHTML = `<div class="service-price">حسب الطلب</div>`;
     } else {
       priceHTML = `<div class="service-price">${service.price || 0}₪ <span>/ مرة</span></div>`;
     }
