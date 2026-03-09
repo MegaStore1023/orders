@@ -1237,15 +1237,13 @@ window.loadCategories = function() {
 
 window.renderCatsBar = function() {
   const bar = document.getElementById('catsBar');
+  const wrap = document.getElementById('catsBarWrap');
   if (!bar) return;
   bar.innerHTML = `<button class="cat-btn ${activeCategoryId==='all'?'active':''}" onclick="selectCategory('all')"><i class="fas fa-border-all" style="margin-left:4px;"></i> الكل</button>`;
   categoriesData.forEach(cat => {
     bar.innerHTML += `<button class="cat-btn ${activeCategoryId===cat.id?'active':''}" onclick="selectCategory('${cat.id}')">${cat.name}</button>`;
   });
-}
-const bar = document.getElementById('catsBar');
-  const wrap = document.getElementById('catsBarWrap');
-  if (!bar || !wrap) return;
+  if (!wrap) return;
   const updateFade = () => {
     const scrollLeft = Math.abs(bar.scrollLeft);
     const maxScroll = bar.scrollWidth - bar.clientWidth;
@@ -1255,9 +1253,9 @@ const bar = document.getElementById('catsBar');
   bar.removeEventListener('scroll', bar._fadeHandler);
   bar._fadeHandler = updateFade;
   bar.addEventListener('scroll', updateFade);
-  // شغّل بعد ما يكمل الرسم
   setTimeout(updateFade, 100);
   setTimeout(updateFade, 400);
+}
 window.selectCategory = function(catId) {
   activeCategoryId = catId;
   renderCatsBar();
