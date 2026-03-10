@@ -1256,6 +1256,7 @@ window.renderCatsBar = function() {
   bar.removeEventListener('scroll', bar._fadeHandler);
   bar._fadeHandler = updateFade;
   bar.addEventListener('scroll', updateFade);
+  bar.scrollLeft = -bar.scrollWidth;
   setTimeout(updateFade, 100);
   setTimeout(updateFade, 400);
 }
