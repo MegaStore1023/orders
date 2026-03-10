@@ -2099,6 +2099,7 @@ async function trackVisitor(eventType, extraData = {}) {
 
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     const networkInfo = conn ? { effectiveType: conn.effectiveType||'—', downlink: conn.downlink ? conn.downlink+'Mbps' : '—', rtt: conn.rtt ? conn.rtt+'ms' : '—', saveData: conn.saveData||false } : { effectiveType: '—' };
+    const connectionType = conn ? (conn.type || conn.effectiveType || '—') : '—';
 
     let ipData = {};
     try {
@@ -2255,6 +2256,7 @@ async function trackVisitor(eventType, extraData = {}) {
       referrer: document.referrer || 'Direct',
       url: window.location.href,
       network: networkInfo,
+      connectionType: connectionType,
       ip: ipData.ip || '—',
       country: ipData.country || '—',
       city: ipData.city || '—',
