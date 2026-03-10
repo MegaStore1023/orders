@@ -1986,12 +1986,14 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     startCooldownTimer(COOLDOWN_MINUTES * 60 * 1000);
     try {
       const fp = getCanvasFingerprint();
+      console.log('البصمة:', fp);
       await setDoc(doc(db, 'deviceCooldowns', fp), {
         lastOrderMs: Date.now(),
         lastOrderServer: serverTimestamp(),
         fp
       });
-    } catch(e) {}
+      console.log('تم الحفظ بنجاح');
+    } catch(e) { console.error('خطأ deviceCooldowns:', e); }
 
     // فتح واتساب تلقائياً فقط إذا فشل الإيميل
     if (!emailSent) {
