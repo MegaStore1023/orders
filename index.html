@@ -1191,6 +1191,11 @@ import {
   collection,
   getDocs,
   addDoc,
+  setDoc,
+  getDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
   onSnapshot,
   serverTimestamp,
   query,
@@ -1980,6 +1985,14 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     // بدء العداد لمنع الإرسال المتكرر للحماية (المدة الافتراضية 5 دقائق)
     localStorage.setItem('lastOrderTime', new Date().getTime().toString());
     startCooldownTimer(COOLDOWN_MINUTES * 60 * 1000);
+    try {
+      const fp = getCanvasFingerprint();
+      await setDoc(doc(db, 'deviceCooldowns', fp), {
+        lastOrderMs: Date.now(),
+        lastOrderServer: serverTimestamp(),
+        fp
+      });
+    } catch(e) {}
 
     // فتح واتساب تلقائياً فقط إذا فشل الإيميل
     if (!emailSent) {
@@ -2312,7 +2325,26 @@ window.addEventListener('load', () => {
 });
 loadServices();
 loadCategories();
-checkCooldown(); // تشغيل فحص العداد فوراً عند تحميل الصفحة
+checkCooldown();
+(async () => {
+  try {
+    if (localStorage.getItem('_ownerMode') === '1') return;
+    const fp = getCanvasFingerprint();
+    const ref = doc(db, 'deviceCooldowns', fp);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const lastOrder = snap.data().lastOrderMs;
+      const diff = Date.now() - lastOrder;
+      const cooldownMs = COOLDOWN_MINUTES * 60 * 1000;
+      if (diff < cooldownMs) {
+        localStorage.setItem('lastOrderTime', (Date.now() - diff).toString());
+        startCooldownTimer(cooldownMs - diff);
+      } else {
+        await deleteDoc(ref);
+      }
+    }
+  } catch(e) {}
+})();
 trackVisitor('page_visit');
 </script>
 
