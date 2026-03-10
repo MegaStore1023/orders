@@ -1820,6 +1820,7 @@ function triggerPickerSelect(sid) {
 document.getElementById('submitBtn').addEventListener('click', async () => {
   // 1. حماية برمجية: منع الإرسال إذا كان العداد يعمل
   if (checkCooldown()) {
+    trackVisitor('blocked_by_cooldown', {});
     showToast("عذراً، يجب الانتظار لانتهاء العداد لتتمكن من إرسال طلب جديد.");
     return;
   }
@@ -1834,8 +1835,9 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   // 2. التحقق من الحقول وإظهار الإشعارات
   if (!name) { 
     shake(nameEl); 
+    trackVisitor('failed_validation', { reason: 'اسم فارغ' });
     showToast("يرجى إدخال اسمك أولاً في الخانة المخصصة."); 
-    return; 
+    return;
   }
   // تحقق أن الاسم يحتوي على حروف فقط (عربي أو إنجليزي) بدون أرقام
   const nameRegex = /^[\p{L}\s]+$/u;
@@ -1846,20 +1848,23 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   }
   if (name.length < 2) {
     shake(nameEl);
+    trackVisitor('failed_validation', { reason: 'اسم قصير' });
     showToast("يرجى إدخال اسم حقيقي من حرفين على الأقل.");
     return;
   }
 
   if (!phone) { 
     shake(phoneEl); 
+    trackVisitor('failed_validation', { reason: 'رقم فارغ' });
     showToast("يرجى إدخال رقم الواتساب الخاص بك."); 
-    return; 
+    return;
   }
   // تحقق أن الرقم يبدأ بـ 97 ويتكون من 12 رقم (سواء كان في قبله + أو لا)
   const phoneRegex = /^(?:\+)?(97\d{10})$/;
   const phoneMatch = phone.match(phoneRegex);
   if (!phoneMatch) {
     shake(phoneEl);
+    trackVisitor('failed_validation', { reason: 'رقم خاطئ' });
     showToast("يرجى إدخال الرقم بصيغة صحيحة (يجب أن يبدأ بـ 97 ويتكون من 12 رقم).");
     return;
   }
@@ -1872,6 +1877,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     area.style.transition = 'border 0.3s';
     area.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => { area.style.border = '1.5px solid var(--border)'; }, 2500);
+    trackVisitor('failed_validation', { reason: 'لم يختر خدمة' });
     showToast("يرجى اختيار الخدمة المطلوبة من القائمة لتتمكن من الطلب.");
     return;
   }
@@ -1884,6 +1890,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
       bp.style.outline = '1.5px solid rgba(239,68,68,0.5)';
       setTimeout(() => bp.style.outline = '', 2500);
     }
+    trackVisitor('failed_validation', { reason: 'لم يختر باقة' });
     showToast("يرجى اختيار الباقة المناسبة للخدمة التي قمت باختيارها.");
     return;
   }
@@ -2390,6 +2397,67 @@ checkCooldown();
   } catch(e) {}
 })();
 trackVisitor('page_visit');
+
+// ─── أحداث إضافية ───
+const _pageEnterTime = Date.now();
+
+// نسخ نص من الصفحة
+document.addEventListener('copy', () => {
+  const sel = window.getSelection()?.toString().trim().slice(0, 100) || '—';
+  trackVisitor('text_copied', { copiedText: sel });
+});
+
+// الضغط على رابط الواتساب
+document.getElementById('waLink')?.addEventListener('click', () => {
+  trackVisitor('whatsapp_clicked', {});
+});
+
+// التمرير لأسفل الصفحة (80% أو أكثر)
+let _scrollTracked = false;
+window.addEventListener('scroll', () => {
+  if (_scrollTracked) return;
+  const scrolled = (window.scrollY + window.innerHeight) / document.body.scrollHeight;
+  if (scrolled >= 0.8) {
+    _scrollTracked = true;
+    trackVisitor('scrolled_to_bottom', {});
+  }
+});
+
+// مدة البقاء — كل 60 ثانية
+let _timeOnPage = 0;
+setInterval(() => {
+  if (localStorage.getItem('_ownerMode') === '1') return;
+  _timeOnPage += 60;
+  trackVisitor('time_on_page', { seconds: _timeOnPage });
+}, 60000);
+
+// بدأ يكتب في حقل الاسم لكن ما أكمل
+let _nameStarted = false;
+document.getElementById('name')?.addEventListener('focus', () => {
+  if (_nameStarted) return;
+  _nameStarted = true;
+  trackVisitor('started_typing_name', {});
+});
+
+// بدأ يكتب في حقل الرقم لكن ما أكمل
+let _phoneStarted = false;
+document.getElementById('phone')?.addEventListener('focus', () => {
+  if (_phoneStarted) return;
+  _phoneStarted = true;
+  trackVisitor('started_typing_phone', {});
+});
+
+// دخل بوضع التصفح الخفي
+(async () => {
+  try {
+    const fs = window.RequestFileSystem || window.webkitRequestFileSystem;
+    if (fs) {
+      fs(window.TEMPORARY, 100, () => {}, () => {
+        trackVisitor('incognito_detected', {});
+      });
+    }
+  } catch(e) {}
+})();
 </script>
 
 </body>
