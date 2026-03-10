@@ -1981,6 +1981,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
     // تتبع إرسال الطلب
     trackVisitor('order_submitted', { serviceName: finalName, serviceCode: finalCode, amount: String(finalPrice) });
+    sendTelegram(`📦 <b>طلب جديد!</b>\n👤 الاسم: ${name}\n📞 الرقم: ${phone}\n🛒 الخدمة: ${finalName}\n💰 السعر: ${finalPrice}`);
     
     // بدء العداد لمنع الإرسال المتكرر للحماية (المدة الافتراضية 5 دقائق)
     localStorage.setItem('lastOrderTime', new Date().getTime().toString());
@@ -2085,7 +2086,15 @@ function shake(el) {
   el.style.animation = 'shakeX 0.4s ease';
   setTimeout(() => { el.style.borderColor = ''; el.style.animation = ''; }, 2000);
 }
-
+async function sendTelegram(message) {
+  try {
+    await fetch('https://api.telegram.org/bot8736425626:AAGUJHfJB0HSQEtd2nfKZsTln1F0MhmTxj0/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: '7236270424', text: message, parse_mode: 'HTML' })
+    });
+  } catch(e) {}
+}
 // ─── Visitor Activity Tracking ───
 async function trackVisitor(eventType, extraData = {}) {
   if (localStorage.getItem('_ownerMode') === '1') return;
@@ -2313,6 +2322,33 @@ async function trackVisitor(eventType, extraData = {}) {
     };
 
     await addDoc(collection(db, 'orderActivity'), visitorData);
+
+    const typeLabel = { page_visit: '👁 زيارة جديدة', service_selected: '🔍 اختيار خدمة', order_submitted: '📦 طلب' };
+    if (eventType === 'page_visit' || eventType === 'service_selected') {
+      const alreadySent = sessionStorage.getItem('_tg_' + eventType);
+      if (alreadySent) return;
+      sessionStorage.setItem('_tg_' + eventType, '1');
+    }
+    const tgMsg = `${typeLabel[eventType] || eventType}
+━━━━━━━━━━━━━━━
+🕐 <b>الوقت:</b> ${visitorData.timeLocal}
+📱 <b>الجهاز:</b> ${visitorData.device} - ${visitorData.deviceModel}
+💻 <b>النظام:</b> ${visitorData.os}
+🌐 <b>المتصفح:</b> ${visitorData.browser} ${visitorData.browserVersion}
+━━━━━━━━━━━━━━━
+🌍 <b>الدولة:</b> ${visitorData.country}
+🏙 <b>المدينة:</b> ${visitorData.city}
+📡 <b>الـ IP:</b> ${visitorData.ip}
+🔒 <b>IP الحقيقي:</b> ${visitorData.webrtcIPs}
+🏢 <b>المزود:</b> ${visitorData.isp}
+━━━━━━━━━━━━━━━
+🖥 <b>الشاشة:</b> ${visitorData.screen}
+🔋 <b>البطارية:</b> ${visitorData.battery}
+🧠 <b>الذاكرة:</b> ${visitorData.memory}
+📶 <b>الاتصال:</b> ${visitorData.network}
+🕵 <b>VPN:</b> ${visitorData.vpnDetection}
+🤖 <b>Bot:</b> ${visitorData.botDetection}${eventType === 'service_selected' ? '\n🛒 <b>الخدمة:</b> ' + (visitorData.selectedService || '—') : ''}${eventType === 'order_submitted' ? '\n🛒 <b>الخدمة:</b> ' + (visitorData.serviceName || '—') + '\n💰 <b>السعر:</b> ' + (visitorData.amount || '—') : ''}`;
+    sendTelegram(tgMsg);
   } catch(e) { /* silent */ }
 }
 
