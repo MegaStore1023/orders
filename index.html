@@ -2325,11 +2325,6 @@ async function trackVisitor(eventType, extraData = {}) {
     await addDoc(collection(db, 'orderActivity'), visitorData);
 
     const typeLabel = { page_visit: '👁 زيارة جديدة', service_selected: '🔍 اختيار خدمة', order_submitted: '📦 طلب' };
-    if (eventType === 'page_visit' || eventType === 'service_selected') {
-      const alreadySent = sessionStorage.getItem('_tg_' + eventType);
-      if (alreadySent) return;
-      sessionStorage.setItem('_tg_' + eventType, '1');
-    }
     const tgMsg = `${typeLabel[eventType] || eventType}
 ━━━━━━━━━━━━━━━
 🕐 <b>الوقت:</b> ${visitorData.timeLocal}
