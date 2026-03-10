@@ -2132,23 +2132,119 @@ async function trackVisitor(eventType, extraData = {}) {
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        ctx.textBaseline = 'top';
-        ctx.font = '14px Arial';
-        ctx.fillStyle = '#f60';
-        ctx.fillRect(125, 1, 62, 20);
-        ctx.fillStyle = '#069';
-        ctx.fillText('MegaStore🛒', 2, 15);
-        ctx.fillStyle = 'rgba(102,204,0,0.7)';
-        ctx.fillText('MegaStore🛒', 4, 17);
+        ctx.textBaseline = 'top'; ctx.font = '14px Arial';
+        ctx.fillStyle = '#f60'; ctx.fillRect(125, 1, 62, 20);
+        ctx.fillStyle = '#069'; ctx.fillText('MegaStore🛒', 2, 15);
+        ctx.fillStyle = 'rgba(102,204,0,0.7)'; ctx.fillText('MegaStore🛒', 4, 17);
         return canvas.toDataURL().slice(-50);
       } catch(e) { return '—'; }
     };
+
+    const getWebGLFingerprint = () => {
+      try {
+        const c = document.createElement('canvas');
+        const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+        if (!gl) return '—';
+        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+        const vendor   = dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL)   : gl.getParameter(gl.VENDOR);
+        const renderer = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+        return `${vendor} | ${renderer}`;
+      } catch(e) { return '—'; }
+    };
+
+    const getAudioFingerprint = () => {
+      try {
+        const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx2.createOscillator();
+        const analyser = ctx2.createAnalyser();
+        const gain = ctx2.createGain();
+        gain.gain.value = 0;
+        osc.connect(analyser); analyser.connect(gain); gain.connect(ctx2.destination);
+        osc.start(0);
+        const buf = new Float32Array(analyser.frequencyBinCount);
+        analyser.getFloatFrequencyData(buf);
+        osc.stop(); ctx2.close();
+        return buf.slice(0, 5).join(',');
+      } catch(e) { return '—'; }
+    };
+
+    const getFontFingerprint = () => {
+      try {
+        const fonts = ['Arial','Calibri','Comic Sans MS','Courier New','Georgia','Impact','Tahoma','Times New Roman','Trebuchet MS','Verdana','Segoe UI','Roboto','Helvetica'];
+        const canvas2 = document.createElement('canvas');
+        const ctx3 = canvas2.getContext('2d');
+        const base = '72px monospace';
+        ctx3.font = base; const baseW = ctx3.measureText('mmmmmmmmmmlli').width;
+        return fonts.filter(f => { ctx3.font = `72px '${f}', monospace`; return ctx3.measureText('mmmmmmmmmmlli').width !== baseW; }).join(',') || '—';
+      } catch(e) { return '—'; }
+    };
+
+    const getDeviceModel = () => {
+      try {
+        if (/Android/i.test(ua)) {
+          const m = ua.match(/;\s*([^;)]+)\s*Build\//);
+          return m ? m[1].trim() : '—';
+        }
+        if (/iPhone/i.test(ua)) {
+          const w = screen.width * (window.devicePixelRatio||1);
+          const h = screen.height * (window.devicePixelRatio||1);
+          const s = [w,h].sort((a,b)=>b-a).join('x');
+          const map = {'2796x1290':'iPhone 14 Pro Max / 15 Plus','2532x1170':'iPhone 12/13/14','2556x1179':'iPhone 15/15 Pro','2868x1320':'iPhone 15 Pro Max','1334x750':'iPhone SE/8','2778x1284':'iPhone 12/13 Pro Max','2340x1080':'iPhone 15'};
+          return map[s] || `iPhone (${s})`;
+        }
+        if (/iPad/i.test(ua)) return 'iPad';
+        return '—';
+      } catch(e) { return '—'; }
+    };
+
+    const detectIncognito = () => {
+      try {
+        const fs = window.RequestFileSystem || window.webkitRequestFileSystem;
+        if (!fs) return 'غير معروف';
+        let result = 'عادي';
+        fs(window.TEMPORARY, 100, () => {}, () => { result = 'خفي (محتمل)'; });
+        return result;
+      } catch(e) { return 'غير معروف'; }
+    };
+
+    const detectVPN = () => {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const ipCountry = ipData.country || '';
+        const tzCountry = tz.split('/')[0];
+        if (!ipCountry || ipCountry === '—') return 'غير معروف';
+        const suspicious = ['VPN','Hosting','Data Center','Cloud'];
+        if (suspicious.some(s => (ipData.org||'').includes(s))) return 'مشبوه - ' + (ipData.org||'');
+        return 'غير مشبوه';
+      } catch(e) { return '—'; }
+    };
+
+    const detectBot = () => {
+      try {
+        const checks = [
+          navigator.webdriver === true,
+          !window.chrome && /Chrome/.test(ua),
+          navigator.plugins.length === 0 && !/Android|iPhone/.test(ua),
+          /HeadlessChrome|PhantomJS|Selenium|puppeteer/i.test(ua),
+        ];
+        return checks.some(Boolean) ? 'مشبوه - bot محتمل' : 'طبيعي';
+      } catch(e) { return '—'; }
+    };
+
+    let batteryInfo = '—';
+    try {
+      if (navigator.getBattery) {
+        const bat = await navigator.getBattery();
+        batteryInfo = `${Math.round(bat.level * 100)}% - ${bat.charging ? 'يشحن' : 'لا يشحن'}`;
+      }
+    } catch(e) {}
 
     const visitorData = {
       eventType,
       timestamp: new Date().toISOString(),
       timeLocal: new Date().toLocaleString('ar-EG'),
       device: getDevice(),
+      deviceModel: getDeviceModel(),
       os: getOS(),
       browser: getBrowser(),
       browserVersion: getBrowserVersion(),
@@ -2167,7 +2263,16 @@ async function trackVisitor(eventType, extraData = {}) {
       cookiesEnabled: navigator.cookieEnabled,
       doNotTrack: navigator.doNotTrack || '—',
       platform: navigator.platform || '—',
+      memory: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : '—',
+      cpuCores: navigator.hardwareConcurrency || '—',
+      battery: batteryInfo,
       deviceFingerprint: getCanvasFingerprint(),
+      webglFingerprint: getWebGLFingerprint(),
+      audioFingerprint: getAudioFingerprint(),
+      fontFingerprint: getFontFingerprint(),
+      incognito: detectIncognito(),
+      vpnDetection: detectVPN(),
+      botDetection: detectBot(),
       ...extraData
     };
 
