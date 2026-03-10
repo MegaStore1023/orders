@@ -1229,6 +1229,8 @@ const iconStyles = [
   { bg: 'rgba(59,130,246,0.12)', color: '#60a5fa' },
 ];
 window.loadCategories = function() {
+  if (window._categoriesListenerActive) return;
+  window._categoriesListenerActive = true;
   onSnapshot(collection(db, 'categories'), (snap) => {
     categoriesData = [];
     snap.forEach(d => categoriesData.push({ id: d.id, ...d.data() }));
@@ -1345,6 +1347,8 @@ function loadServices() {
   const grid = document.getElementById('servicesGrid');
   const picker = document.getElementById('servicesPicker');
 
+  if (window._servicesListenerActive) return;
+  window._servicesListenerActive = true;
   onSnapshot(collection(db, 'services'), (snap) => {
     servicesData = [];
     snap.forEach(docSnap => servicesData.push({ id: docSnap.id, ...docSnap.data() }));
