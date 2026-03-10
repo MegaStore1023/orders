@@ -2098,7 +2098,7 @@ async function trackVisitor(eventType, extraData = {}) {
     };
 
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    const networkInfo = conn ? { effectiveType: conn.effectiveType||'—', downlink: conn.downlink ? conn.downlink+'Mbps' : '—', rtt: conn.rtt ? conn.rtt+'ms' : '—', saveData: conn.saveData||false } : { effectiveType: '—' };
+    const networkInfo = conn ? `${conn.effectiveType||'—'} / ${conn.downlink ? conn.downlink+'Mbps' : '—'} / ${conn.rtt ? conn.rtt+'ms' : '—'}` : '—';
     const connectionType = conn ? (conn.type || conn.effectiveType || '—') : '—';
 
     let ipData = {};
