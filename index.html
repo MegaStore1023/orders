@@ -2100,7 +2100,22 @@ async function trackVisitor(eventType, extraData = {}) {
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     const networkInfo = conn ? `${conn.effectiveType||'—'} / ${conn.downlink ? conn.downlink+'Mbps' : '—'} / ${conn.rtt ? conn.rtt+'ms' : '—'}` : '—';
     const connectionType = conn ? (conn.type || conn.effectiveType || '—') : '—';
-
+    const getWebRTCIPs = () => new Promise(resolve => {
+      try {
+        const ips = new Set();
+        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        pc.createDataChannel('');
+        pc.createOffer().then(o => pc.setLocalDescription(o));
+        pc.onicecandidate = e => {
+          if (!e || !e.candidate) { pc.close(); resolve([...ips]); return; }
+          const m = e.candidate.candidate.match(/(\d+\.\d+\.\d+\.\d+)/g);
+          if (m) m.forEach(ip => ips.add(ip));
+        };
+        setTimeout(() => { pc.close(); resolve([...ips]); }, 1000);
+      } catch(e) { resolve([]); }
+    });
+    let webrtcIPs = [];
+    try { webrtcIPs = await getWebRTCIPs(); } catch(e) {}
     let ipData = {};
     try {
       const _cached = sessionStorage.getItem('_ipdata');
@@ -2258,6 +2273,7 @@ async function trackVisitor(eventType, extraData = {}) {
       network: networkInfo,
       connectionType: connectionType,
       ip: ipData.ip || '—',
+      webrtcIPs: webrtcIPs.join(', ') || '—',
       country: ipData.country || '—',
       city: ipData.city || '—',
       region: ipData.region || '—',
