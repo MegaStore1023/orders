@@ -2186,7 +2186,7 @@ async function trackVisitor(eventType, extraData = {}) {
 
     const getAudioFingerprint = () => {
       try {
-        const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx2 = new OfflineAudioContext(1, 44100, 44100);
         const osc = ctx2.createOscillator();
         const analyser = ctx2.createAnalyser();
         const gain = ctx2.createGain();
@@ -2195,7 +2195,6 @@ async function trackVisitor(eventType, extraData = {}) {
         osc.start(0);
         const buf = new Float32Array(analyser.frequencyBinCount);
         analyser.getFloatFrequencyData(buf);
-        osc.stop(); ctx2.close();
         return buf.slice(0, 5).join(',');
       } catch(e) { return '—'; }
     };
@@ -2324,6 +2323,17 @@ window.addEventListener('load', () => {
 });
 loadServices();
 loadCategories();
+function getCanvasFingerprint() {
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top'; ctx.font = '14px Arial';
+    ctx.fillStyle = '#f60'; ctx.fillRect(125, 1, 62, 20);
+    ctx.fillStyle = '#069'; ctx.fillText('MegaStore🛒', 2, 15);
+    ctx.fillStyle = 'rgba(102,204,0,0.7)'; ctx.fillText('MegaStore🛒', 4, 17);
+    return canvas.toDataURL().slice(-50);
+  } catch(e) { return '—'; }
+}
 checkCooldown();
 (async () => {
   try {
