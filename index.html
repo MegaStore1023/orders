@@ -1836,6 +1836,11 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     showToast("حقل الاسم يجب أن يحتوي على حروف فقط بدون أرقام أو رموز.");
     return;
   }
+  if (name.length < 2) {
+    shake(nameEl);
+    showToast("يرجى إدخال اسم حقيقي من حرفين على الأقل.");
+    return;
+  }
 
   if (!phone) { 
     shake(phoneEl); 
