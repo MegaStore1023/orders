@@ -2128,6 +2128,22 @@ async function trackVisitor(eventType, extraData = {}) {
       }
     } catch(e) {}
 
+    const getCanvasFingerprint = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#f60';
+        ctx.fillRect(125, 1, 62, 20);
+        ctx.fillStyle = '#069';
+        ctx.fillText('MegaStore🛒', 2, 15);
+        ctx.fillStyle = 'rgba(102,204,0,0.7)';
+        ctx.fillText('MegaStore🛒', 4, 17);
+        return canvas.toDataURL().slice(-50);
+      } catch(e) { return '—'; }
+    };
+
     const visitorData = {
       eventType,
       timestamp: new Date().toISOString(),
@@ -2156,6 +2172,7 @@ async function trackVisitor(eventType, extraData = {}) {
       doNotTrack: navigator.doNotTrack || '—',
       touchPoints: navigator.maxTouchPoints || 0,
       platform: navigator.platform || '—',
+      deviceFingerprint: getCanvasFingerprint(),
       ...extraData
     };
 
