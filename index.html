@@ -1937,6 +1937,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
     let emailSent = false;
 
+    if (localStorage.getItem('_ownerMode') !== '1') {
     // محاولة الإرسال من الحساب الأول
     try {
       await emailjs.send("service_0jdv5mg", "template_jzzcs3l", templateParams, "MQsv_SMY9admtTYbj");
