@@ -1321,7 +1321,7 @@ window.handleServiceSearch = function() {
   }
   dd.style.display = 'block';
 }
-
+let _searchStarted = false;
 window.handleSearchFocus = function() {
   const wrap = document.getElementById('searchWrap');
   if (!wrap) return;
@@ -1331,6 +1331,7 @@ window.handleSearchFocus = function() {
   const currentTop = window.scrollY || window.pageYOffset;
   const targetY = currentTop + rect.top - navH - 12;
   window.scrollTo({ top: targetY, behavior: 'smooth' });
+  if (!_searchStarted) { _searchStarted = true; trackVisitor('search_used', {}); }
 }
 
 window.pickSearchResult = function(serviceId) {
@@ -2193,31 +2194,7 @@ async function trackVisitor(eventType, extraData = {}) {
       } catch(e) { return '—'; }
     };
 
-    const getAudioFingerprint = () => {
-      try {
-        const ctx2 = new OfflineAudioContext(1, 44100, 44100);
-        const osc = ctx2.createOscillator();
-        const analyser = ctx2.createAnalyser();
-        const gain = ctx2.createGain();
-        gain.gain.value = 0;
-        osc.connect(analyser); analyser.connect(gain); gain.connect(ctx2.destination);
-        osc.start(0);
-        const buf = new Float32Array(analyser.frequencyBinCount);
-        analyser.getFloatFrequencyData(buf);
-        return buf.slice(0, 5).join(',');
-      } catch(e) { return '—'; }
-    };
 
-    const getFontFingerprint = () => {
-      try {
-        const fonts = ['Arial','Calibri','Comic Sans MS','Courier New','Georgia','Impact','Tahoma','Times New Roman','Trebuchet MS','Verdana','Segoe UI','Roboto','Helvetica'];
-        const canvas2 = document.createElement('canvas');
-        const ctx3 = canvas2.getContext('2d');
-        const base = '72px monospace';
-        ctx3.font = base; const baseW = ctx3.measureText('mmmmmmmmmmlli').width;
-        return fonts.filter(f => { ctx3.font = `72px '${f}', monospace`; return ctx3.measureText('mmmmmmmmmmlli').width !== baseW; }).join(',') || '—';
-      } catch(e) { return '—'; }
-    };
 
     const getDeviceModel = () => {
       try {
@@ -2319,7 +2296,7 @@ async function trackVisitor(eventType, extraData = {}) {
 
     await addDoc(collection(db, 'orderActivity'), { ...visitorData, serverTime: serverTimestamp() });
 
-    const typeLabel = { page_visit: '👁 زيارة جديدة', service_selected: '🔍 اختيار خدمة', order_submitted: '📦 طلب', text_copied: '📋 نسخ نص', whatsapp_clicked: '💬 ضغط واتساب', scrolled_to_bottom: '📜 تمرر للأسفل', time_on_page: '⏱ وقت في الصفحة', started_typing_name: '✍️ بدأ يكتب اسم', started_typing_phone: '📞 بدأ يكتب رقم', incognito_detected: '🕵️ وضع خفي', blocked_by_cooldown: '🚫 محاولة تجاوز عداد', failed_validation: '❌ فشل التحقق', started_search: '🔍 بدأ البحث', phone_pasted: '📋 لصق الرقم' };
+    const typeLabel = { page_visit: '👁 زيارة جديدة', service_selected: '🔍 اختيار خدمة', order_submitted: '📦 طلب', text_copied: '📋 نسخ نص', whatsapp_clicked: '💬 ضغط واتساب', scrolled_to_bottom: '📜 تمرر للأسفل', time_on_page: '⏱ وقت في الصفحة', started_typing_name: '✍️ بدأ يكتب اسم', started_typing_phone: '📞 بدأ يكتب رقم', incognito_detected: '🕵️ وضع خفي', blocked_by_cooldown: '🚫 محاولة تجاوز عداد', failed_validation: '❌ فشل التحقق', search_used: '🔍 استخدم البحث', phone_pasted: '📋 لصق الرقم' };
     const tgMsg = `${typeLabel[eventType] || eventType}
 ━━━━━━━━━━━━━━━
 🕐 <b>الوقت:</b> ${visitorData.timeLocal}
@@ -2387,7 +2364,7 @@ checkCooldown();
 trackVisitor('page_visit');
 
 // ─── أحداث إضافية ───
-const _pageEnterTime = Date.now();
+const _pageEnterTime = Date.now();;
 // عداد النقرات الكلي
 let _clickCount = 0;
 document.addEventListener('click', () => { _clickCount++; });
@@ -2449,6 +2426,9 @@ document.getElementById('phone')?.addEventListener('focus', () => {
   if (_phoneStarted) return;
   _phoneStarted = true;
   trackVisitor('started_typing_phone', {});
+});
+document.getElementById('phone')?.addEventListener('paste', () => {
+  trackVisitor('phone_pasted', {});
 });
 
 // دخل بوضع التصفح الخفي
