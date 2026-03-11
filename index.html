@@ -2369,8 +2369,6 @@ const _pageEnterTime = Date.now();;
 let _clickCount = 0;
 document.addEventListener('click', () => { _clickCount++; });
 
-// بدأ يبحث
-let _searchStarted = false;
 document.getElementById('svcSearchInput')?.addEventListener('focus', () => {
   if (_searchStarted) return;
   _searchStarted = true;
