@@ -1909,18 +1909,6 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     if (localStorage.getItem('_ownerMode') === '1') {
       console.log('%c[Owner Mode] الطلب لم يُرسل للـ Firebase', 'color:#a5b4fc; font-weight:bold;');
     } else {
-    const fiveMinAgo = Timestamp.fromMillis(Date.now() - 5 * 60 * 1000);
-    const recentSnap = await getDocs(query(
-      collection(db, 'orders'),
-      where('phone', '==', phone),
-      where('timestamp', '>', fiveMinAgo)
-    ));
-    if (!recentSnap.empty) {
-      btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
-      btn.disabled = false;
-      showToast('عذراً، لا يمكن إرسال أكثر من طلب كل 5 دقائق لنفس الرقم.');
-      return;
-    }
     await addDoc(collection(db, 'orders'), {
       customerName: name,
       phone:        phone,
