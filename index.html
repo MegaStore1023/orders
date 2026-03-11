@@ -2425,9 +2425,6 @@ document.getElementById('phone')?.addEventListener('focus', () => {
   _phoneStarted = true;
   trackVisitor('started_typing_phone', {});
 });
-document.getElementById('phone')?.addEventListener('paste', () => {
-  trackVisitor('phone_pasted', {});
-});
 
 // دخل بوضع التصفح الخفي
 (async () => {
