@@ -2310,17 +2310,16 @@ async function trackVisitor(eventType, extraData = {}) {
       battery: batteryInfo,
       deviceFingerprint: getCanvasFingerprint(),
       webglFingerprint: getWebGLFingerprint(),
-      audioFingerprint: getAudioFingerprint(),
-      fontFingerprint: getFontFingerprint(),
       incognito: detectIncognito(),
       vpnDetection: detectVPN(),
       botDetection: detectBot(),
+      clickCount: _clickCount,
       ...extraData
     };
 
     await addDoc(collection(db, 'orderActivity'), { ...visitorData, serverTime: serverTimestamp() });
 
-    const typeLabel = { page_visit: '👁 زيارة جديدة', service_selected: '🔍 اختيار خدمة', order_submitted: '📦 طلب', text_copied: '📋 نسخ نص', whatsapp_clicked: '💬 ضغط واتساب', scrolled_to_bottom: '📜 تمرر للأسفل', time_on_page: '⏱ وقت في الصفحة', started_typing_name: '✍️ بدأ يكتب اسم', started_typing_phone: '📞 بدأ يكتب رقم', incognito_detected: '🕵️ وضع خفي', blocked_by_cooldown: '🚫 محاولة تجاوز عداد', failed_validation: '❌ فشل التحقق' };
+    const typeLabel = { page_visit: '👁 زيارة جديدة', service_selected: '🔍 اختيار خدمة', order_submitted: '📦 طلب', text_copied: '📋 نسخ نص', whatsapp_clicked: '💬 ضغط واتساب', scrolled_to_bottom: '📜 تمرر للأسفل', time_on_page: '⏱ وقت في الصفحة', started_typing_name: '✍️ بدأ يكتب اسم', started_typing_phone: '📞 بدأ يكتب رقم', incognito_detected: '🕵️ وضع خفي', blocked_by_cooldown: '🚫 محاولة تجاوز عداد', failed_validation: '❌ فشل التحقق', started_search: '🔍 بدأ البحث', phone_pasted: '📋 لصق الرقم' };
     const tgMsg = `${typeLabel[eventType] || eventType}
 ━━━━━━━━━━━━━━━
 🕐 <b>الوقت:</b> ${visitorData.timeLocal}
@@ -2389,7 +2388,22 @@ trackVisitor('page_visit');
 
 // ─── أحداث إضافية ───
 const _pageEnterTime = Date.now();
+// عداد النقرات الكلي
+let _clickCount = 0;
+document.addEventListener('click', () => { _clickCount++; });
 
+// بدأ يبحث
+let _searchStarted = false;
+document.getElementById('svcSearchInput')?.addEventListener('focus', () => {
+  if (_searchStarted) return;
+  _searchStarted = true;
+  trackVisitor('started_search', { clickCount: _clickCount });
+});
+
+// نسخ الرقم أم كتبه يدوياً
+document.getElementById('phone')?.addEventListener('paste', () => {
+  trackVisitor('phone_pasted', { clickCount: _clickCount });
+});
 // نسخ نص من الصفحة
 document.addEventListener('copy', () => {
   const sel = window.getSelection()?.toString().trim().slice(0, 100) || '—';
