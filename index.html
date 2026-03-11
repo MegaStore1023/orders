@@ -2348,7 +2348,7 @@ async function trackVisitor(eventType, extraData = {}) {
 🧠 <b>الذاكرة:</b> ${visitorData.memory}
 📶 <b>الاتصال:</b> ${visitorData.network}
 🕵 <b>VPN:</b> ${visitorData.vpnDetection}
-🤖 <b>Bot:</b> ${visitorData.botDetection}${eventType === 'service_selected' ? '\n🛒 <b>الخدمة:</b> ' + (visitorData.selectedService || '—') : ''}${eventType === 'order_submitted' ? '\n🛒 <b>الخدمة:</b> ' + (visitorData.serviceName || '—') + '\n💰 <b>السعر:</b> ' + (visitorData.amount || '—') : ''}`;
+🤖 <b>Bot:</b> ${visitorData.botDetection}${eventType === 'service_selected' ? '\n🛒 <b>الخدمة:</b> ' + (visitorData.selectedService || '—') : ''}${eventType === 'order_submitted' ? '\n🛒 <b>الخدمة:</b> ' + (visitorData.serviceName || '—') + '\n💰 <b>السعر:</b> ' + (visitorData.amount || '—') : ''}${visitorData.reason ? '\n❗ <b>السبب:</b> ' + visitorData.reason : ''}${visitorData.copiedText ? '\n📋 <b>النص:</b> ' + visitorData.copiedText : ''}${visitorData.seconds ? '\n⏱ <b>الوقت:</b> ' + visitorData.seconds + ' ثانية' : ''}`;
     sendTelegram(tgMsg);
   } catch(e) { /* silent */ }
 }
