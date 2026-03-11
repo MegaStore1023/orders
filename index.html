@@ -1995,14 +1995,16 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     // بدء العداد لمنع الإرسال المتكرر للحماية (المدة الافتراضية 5 دقائق)
     localStorage.setItem('lastOrderTime', new Date().getTime().toString());
     startCooldownTimer(COOLDOWN_MINUTES * 60 * 1000);
-    try {
-      const fp = getCanvasFingerprint();
-      await setDoc(doc(db, 'deviceCooldowns', fp), {
-        lastOrderMs: Date.now(),
-        lastOrderServer: serverTimestamp(),
-        fp
-      });
-    } catch(e) {}
+    if (localStorage.getItem('_ownerMode') !== '1') {
+      try {
+        const fp = getCanvasFingerprint();
+        await setDoc(doc(db, 'deviceCooldowns', fp), {
+          lastOrderMs: Date.now(),
+          lastOrderServer: serverTimestamp(),
+          fp
+        });
+      } catch(e) {}
+    }
 
     // فتح واتساب تلقائياً فقط إذا فشل الإيميل
     if (!emailSent) {
@@ -2408,6 +2410,7 @@ document.addEventListener('copy', () => {
 
 // الضغط على رابط الواتساب
 document.getElementById('waLink')?.addEventListener('click', () => {
+  if (document.getElementById('waLink').href === '#' || !document.getElementById('waLink').href) return;
   trackVisitor('whatsapp_clicked', {});
 });
 
