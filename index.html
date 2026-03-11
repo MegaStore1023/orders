@@ -1196,6 +1196,7 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
+  Timestamp,
   onSnapshot,
   query,
   orderBy,
@@ -1908,7 +1909,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     if (localStorage.getItem('_ownerMode') === '1') {
       console.log('%c[Owner Mode] الطلب لم يُرسل للـ Firebase', 'color:#a5b4fc; font-weight:bold;');
     } else {
-    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const fiveMinAgo = Timestamp.fromMillis(Date.now() - 5 * 60 * 1000);
     const recentSnap = await getDocs(query(
       collection(db, 'orders'),
       where('phone', '==', phone),
