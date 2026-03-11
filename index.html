@@ -1990,7 +1990,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
     // تتبع إرسال الطلب
     trackVisitor('order_submitted', { serviceName: finalName, serviceCode: finalCode, amount: String(finalPrice) });
-    sendTelegram(`📦 <b>طلب جديد!</b>\n👤 الاسم: ${name}\n📞 الرقم: ${phone}\n🛒 الخدمة: ${finalName}\n💰 السعر: ${finalPrice}`);
+    if (localStorage.getItem('_ownerMode') !== '1') sendTelegram(`📦 <b>طلب جديد!</b>\n👤 الاسم: ${name}\n📞 الرقم: ${phone}\n🛒 الخدمة: ${finalName}\n💰 السعر: ${finalPrice}`);
     
     // بدء العداد لمنع الإرسال المتكرر للحماية (المدة الافتراضية 5 دقائق)
     localStorage.setItem('lastOrderTime', new Date().getTime().toString());
