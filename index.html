@@ -1117,9 +1117,9 @@ footer {
         <i class="fab fa-whatsapp"></i>
         تواصل مباشرة على واتساب
       </a>
-      <button onclick="showNewOrderForm()" style="margin-top:14px; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text-muted); padding:12px 28px; border-radius:var(--radius); font-size:15px; font-weight:700; font-family:'Tajawal',sans-serif; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all 0.2s; width:100%; justify-content:center;">
-        <i class="fas fa-rotate-right"></i> إرسال طلب جديد
-      </button>
+      <button onclick="showNewOrderForm()" style="margin-top:12px; background:transparent; border:1.5px dashed rgba(255,255,255,0.12); color:var(--text-muted); padding:13px 28px; border-radius:var(--radius); font-size:14px; font-weight:700; font-family:'Tajawal',sans-serif; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all 0.25s; width:100%; justify-content:center; letter-spacing:0.2px;" onmouseover="this.style.borderColor='rgba(99,102,241,0.4)';this.style.color='#a5b4fc';" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)';this.style.color='var(--text-muted)';">
+  <i class="fas fa-rotate-right" style="font-size:13px;"></i> طلب خدمة جديدة
+</button>
     </div>
   </div>
 
@@ -2059,7 +2059,7 @@ function startCooldownTimer(remainingMs) {
   updateBtn();
   cooldownInterval = setInterval(updateBtn, 1000);
 }
-function showNewOrderForm() {
+window.showNewOrderForm = function showNewOrderForm() {
   document.getElementById('orderSuccess').style.display = 'none';
   document.getElementById('orderForm').style.display = 'block';
   const lastOrderTime = parseInt(localStorage.getItem('lastOrderTime'));
