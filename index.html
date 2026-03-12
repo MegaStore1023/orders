@@ -634,29 +634,6 @@ section { padding: 80px 24px; position: relative; z-index: 1; }
 .reviewer-name { font-size: 14px; font-weight: 800; }
 .reviewer-handle { font-size: 12px; color: var(--text-muted); }
 
-/* Floating WhatsApp */
-.wa-float {
-  position: fixed;
-  bottom: 24px;
-  left: 24px;
-  z-index: 200;
-  background: #25D366;
-  color: white;
-  width: 58px; height: 58px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 26px;
-  box-shadow: 0 8px 25px rgba(37,211,102,0.45);
-  text-decoration: none;
-  transition: all 0.3s;
-  animation: waPulse 3s ease-in-out infinite;
-}
-.wa-float:hover { transform: scale(1.1); }
-@keyframes waPulse {
-  0%, 100% { box-shadow: 0 8px 25px rgba(37,211,102,0.45); }
-  50% { box-shadow: 0 8px 40px rgba(37,211,102,0.7), 0 0 0 10px rgba(37,211,102,0.08); }
-}
-
 /* Footer */
 footer {
   background: var(--bg-card);
@@ -1140,6 +1117,9 @@ footer {
         <i class="fab fa-whatsapp"></i>
         تواصل مباشرة على واتساب
       </a>
+      <button onclick="showNewOrderForm()" style="margin-top:14px; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text-muted); padding:12px 28px; border-radius:var(--radius); font-size:15px; font-weight:700; font-family:'Tajawal',sans-serif; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all 0.2s; width:100%; justify-content:center;">
+        <i class="fas fa-rotate-right"></i> إرسال طلب جديد
+      </button>
     </div>
   </div>
 
@@ -2048,7 +2028,9 @@ function startCooldownTimer(remainingMs) {
   const banner = document.getElementById('cooldownBanner');
   
   btn.disabled = true;
-  banner.classList.add('show');
+  if (document.getElementById('orderSuccess').style.display !== 'block') {
+    banner.classList.add('show');
+  }
   
   if (cooldownInterval) clearInterval(cooldownInterval);
   
@@ -2075,7 +2057,18 @@ function startCooldownTimer(remainingMs) {
   updateBtn();
   cooldownInterval = setInterval(updateBtn, 1000);
 }
-
+function showNewOrderForm() {
+  document.getElementById('orderSuccess').style.display = 'none';
+  document.getElementById('orderForm').style.display = 'block';
+  const lastOrderTime = parseInt(localStorage.getItem('lastOrderTime'));
+  if (lastOrderTime) {
+    const diff = Date.now() - lastOrderTime;
+    const cooldownMs = COOLDOWN_MINUTES * 60 * 1000;
+    if (diff < cooldownMs) {
+      document.getElementById('cooldownBanner').classList.add('show');
+    }
+  }
+}
 // ─── Shake animation ───
 function shake(el) {
   el.style.borderColor = 'var(--danger)';
