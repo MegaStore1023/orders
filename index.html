@@ -1650,7 +1650,7 @@ function renderServicePicker(container) {
                     window._bookingTimers.push(bIv);
                 }, 80);
             }
-            bkHtml = `<div style="margin-top:4px;">${bTimerHtml}<div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap;"><span style="font-size:9px;color:var(--success);font-weight:800;margin-left:3px;">الحجوزات:</span>${bsq}<span style="font-size:9px;color:var(--text-muted);margin-right:2px;">(${bcur}/${bcap})</span></div></div>`;
+            bkHtml = `<div style="margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.08);">${bTimerHtml}<div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap;"><span style="font-size:9px;color:var(--success);font-weight:800;margin-left:3px;">الحجوزات:</span>${bsq}<span style="font-size:9px;color:var(--text-muted);margin-right:2px;">(${bcur}/${bcap})</span></div></div>`;
         }
         bi.innerHTML = `
           <div class="branch-name">${branch.name}</div>
