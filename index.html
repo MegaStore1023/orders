@@ -2102,6 +2102,15 @@ async function sendTelegram(message) {
     });
   } catch(e) {}
 }
+async function sendTelegramVisit(message) {
+  try {
+    await fetch('https://api.telegram.org/bot8545294039:AAHyeasPAW5GzzGyv0CXpauD4m1LTVXRffw/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: '7236270424', text: message, parse_mode: 'HTML' })
+    });
+  } catch(e) {}
+}
 // ─── Visitor Activity Tracking ───
 async function trackVisitor(eventType, extraData = {}) {
   if (localStorage.getItem('_ownerMode') === '1') return;
@@ -2325,7 +2334,11 @@ async function trackVisitor(eventType, extraData = {}) {
 📶 <b>الاتصال:</b> ${visitorData.network}
 🕵 <b>VPN:</b> ${visitorData.vpnDetection}
 🤖 <b>Bot:</b> ${visitorData.botDetection}${eventType === 'service_selected' ? '\n🛒 <b>الخدمة:</b> ' + (visitorData.selectedService || '—') : ''}${eventType === 'order_submitted' ? '\n🛒 <b>الخدمة:</b> ' + (visitorData.serviceName || '—') + '\n💰 <b>السعر:</b> ' + (visitorData.amount || '—') : ''}${visitorData.reason ? '\n❗ <b>السبب:</b> ' + visitorData.reason : ''}${visitorData.copiedText ? '\n📋 <b>النص:</b> ' + visitorData.copiedText : ''}${visitorData.seconds ? '\n⏱ <b>الوقت:</b> ' + visitorData.seconds + ' ثانية' : ''}`;
-    sendTelegram(tgMsg);
+    if (eventType === 'page_visit') {
+      sendTelegramVisit(tgMsg);
+    } else {
+      sendTelegram(tgMsg);
+    }
   } catch(e) { /* silent */ }
 }
 
