@@ -1963,6 +1963,8 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     
     // بدء العداد لمنع الإرسال المتكرر للحماية (المدة الافتراضية 5 دقائق)
     localStorage.setItem('lastOrderTime', new Date().getTime().toString());
+    localStorage.setItem('_savedName', name);
+    localStorage.setItem('_savedPhone', phone);
     startCooldownTimer(COOLDOWN_MINUTES * 60 * 1000);
     if (localStorage.getItem('_ownerMode') !== '1') {
       try {
@@ -1984,7 +1986,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     console.error('Order error:', err);
     btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الطلب';
     btn.disabled = false;
-    alert('حدث خطأ أثناء الإرسال، يرجى المحاولة مرة أخرى.');
+    showToast('حدث خطأ أثناء الإرسال، يرجى المحاولة مرة أخرى.');
   }
 });
 
@@ -2068,6 +2070,20 @@ function showNewOrderForm() {
       document.getElementById('cooldownBanner').classList.add('show');
     }
   }
+  selectedServiceId = null;
+  selectedServiceName = null;
+  selectedBranchCode = null;
+  selectedPrice = null;
+  const area = document.getElementById('selectedServiceArea');
+  if (area) {
+    area.style.border = '1.5px solid var(--border)';
+    area.innerHTML = '<i class="fas fa-arrow-up" style="color:var(--primary); font-size:14px; flex-shrink:0;"></i><span id="selectedServiceText">اختر خدمة من القائمة أعلاه</span>';
+  }
+  const branchArea = document.getElementById('selectedBranchArea');
+  if (branchArea) { branchArea.style.display = 'none'; branchArea.innerHTML = ''; }
+  setTimeout(() => {
+    document.getElementById('services').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 }
 // ─── Shake animation ───
 function shake(el) {
@@ -2321,6 +2337,10 @@ if ('scrollRestoration' in history) {
 window.addEventListener('load', () => {
   setTimeout(() => { window.scrollTo(0, 0); }, 50);
 });
+const _sn = localStorage.getItem('_savedName');
+const _sp = localStorage.getItem('_savedPhone');
+if (_sn) document.getElementById('name').value = _sn;
+if (_sp) document.getElementById('phone').value = _sp;
 loadServices();
 loadCategories();
 function getCanvasFingerprint() {
